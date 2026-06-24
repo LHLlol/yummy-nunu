@@ -2157,19 +2157,68 @@ summary {
 @media (max-width: 640px) {
   .title-logo {
     max-width: 100%;
-    font-size: clamp(2.95rem, 13.8vw, 3.7rem);
+    font-size: clamp(2.45rem, 11.2vw, 3.08rem);
+    line-height: 1.08;
+    letter-spacing: 0.035em;
   }
 
   .title-line {
     max-width: 100%;
+    gap: 0.075em;
+    line-height: 1.08;
   }
 
   .title-line-bottom {
-    margin-left: 0.1em;
+    margin-top: 0.16em;
+    margin-left: 0.04em;
+    font-size: 1.14em;
+  }
+
+  .title-char {
+    -webkit-text-stroke-width: 1px;
+    text-shadow:
+      0.012em 0 var(--ink),
+      0 0.012em var(--ink);
+  }
+
+  .title-char[data-index="0"] {
+    transform: rotate(-2deg) scaleX(1.02) scaleY(0.98);
+  }
+
+  .title-char[data-index="1"] {
+    transform: translateY(-0.01em) rotate(1.5deg) scaleX(0.99) scaleY(1.02);
+  }
+
+  .title-char[data-index="2"] {
+    transform: translateY(0.01em) rotate(-1deg) scaleX(1.03) scaleY(0.98);
+  }
+
+  .title-char[data-index="3"] {
+    transform: translateY(-0.01em) rotate(1.4deg) scaleX(1) scaleY(1.02);
+  }
+
+  .title-char[data-index="4"] {
+    transform: translateY(0.01em) rotate(-1.6deg) scaleX(1.03) scaleY(0.99);
+  }
+
+  .title-char[data-index="5"] {
+    transform: rotate(1deg) scaleX(0.98) scaleY(1.02);
+  }
+
+  .title-char[data-index="6"] {
+    transform: rotate(-1.4deg) scaleX(1.06) scaleY(0.99);
+  }
+
+  .title-char[data-index="7"] {
+    transform: translateY(0.01em) rotate(1.6deg) scaleX(1.04) scaleY(1.01);
   }
 
   .title-logo::before,
   .title-logo::after {
+    display: none;
+  }
+
+  .doodle-chili {
     display: none;
   }
 
