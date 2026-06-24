@@ -5,13 +5,10 @@ import { useRouter } from "next/navigation";
 import type { MascotState } from "@/components/AngryMascot";
 import { detectPlatform } from "@/lib/parser/detectPlatform";
 import { extractUrlFromText } from "@/lib/parser/extractUrlFromText";
-import type { ParseApiResponse, Submission } from "@/types/submission";
-
-interface AdminShortcutResponse {
-  success: boolean;
-  redirectTo?: string;
-  message?: string;
-}
+import { parseSubmissionClient } from "@/lib/parser/parseSubmissionClient";
+import { saveLocalSubmission } from "@/lib/storage/localSubmissions";
+import { isVaultEntryCode, unlockVaultSession } from "@/lib/vault/access";
+import type { Submission } from "@/types/submission";
 
 interface SubmitFormProps {
   onMascotStateChange?: (state: MascotState) => void;
@@ -27,10 +24,6 @@ function platformLabel(platform: Submission["sourcePlatform"]) {
   }
 
   return "未知平台";
-}
-
-function isPotentialVaultCode(value: string) {
-  return /^[a-z]{3}\d{8}$/i.test(value);
 }
 
 function wait(ms: number) {
@@ -66,40 +59,23 @@ export default function SubmitForm({ onMascotStateChange }: SubmitFormProps) {
     onMascotStateChange?.("listening");
 
     try {
-      if (isPotentialVaultCode(value)) {
-        const shortcutResponse = await fetch("/api/admin/shortcut", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ code: value }),
-        });
-        const shortcut = (await shortcutResponse.json()) as AdminShortcutResponse;
-
-        if (shortcut.success && shortcut.redirectTo) {
-          onMascotStateChange?.("unlocked");
-          window.sessionStorage.setItem("nunu_vault_unlocked", "true");
-          await wait(950);
-          router.push(shortcut.redirectTo);
-          return;
-        }
+      if (isVaultEntryCode(value)) {
+        onMascotStateChange?.("unlocked");
+        unlockVaultSession();
+        await wait(950);
+        router.push("/nunu-vault");
+        return;
       }
 
-      const response = await fetch("/api/parse", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ rawInput }),
-      });
-
-      const result = (await response.json()) as ParseApiResponse;
-      setSubmission(result.data);
+      const result = await parseSubmissionClient(rawInput);
 
       if (result.success) {
+        const savedSubmission = saveLocalSubmission(result.data);
+        setSubmission(savedSubmission);
         onMascotStateChange?.("received");
         setFormMessage(null);
       } else {
+        setSubmission(result.data);
         onMascotStateChange?.("error");
         setFormMessage(result.data.errorMessage ?? "怒怒这次没听清，可以稍后再试。");
       }

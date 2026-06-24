@@ -1,5 +1,4 @@
-import type { Submission } from "@/types/submission";
-import { saveSubmission } from "@/lib/storage/saveSubmission";
+import type { ParseApiResponse, Submission } from "@/types/submission";
 import { detectPlatform } from "./detectPlatform";
 import { downloadVideoIfPossible } from "./downloadVideoIfPossible";
 import { extractDishNameFromText } from "./extractDishNameFromText";
@@ -21,39 +20,44 @@ function createBaseSubmission(rawInput: string): Submission {
     author: null,
     coverUrl: null,
     videoUrl: null,
-    textContent: "",
+    textContent: rawInput,
     extractedDishName: null,
     dishCandidates: [],
     confidence: 0,
     parseStatus: "pending",
     errorMessage: null,
     readStatus: "unread",
-    ownerStatus: null,
+    ownerStatus: "new",
     ownerNote: null,
     createdAt: now,
     updatedAt: now,
   };
 }
 
-export async function parseSubmission(rawInput: string): Promise<Submission> {
+export async function parseSubmissionClient(rawInput: string): Promise<ParseApiResponse> {
   const submission = createBaseSubmission(rawInput);
 
-  if (!submission.rawInput.trim()) {
+  if (!rawInput.trim()) {
     submission.parseStatus = "failed";
     submission.errorMessage = "怒怒没找到链接，再粘贴一次试试。";
     submission.updatedAt = new Date().toISOString();
-    return saveSubmission(submission);
+    return {
+      success: false,
+      data: submission,
+    };
   }
 
-  const extractedUrl = extractUrlFromText(submission.rawInput);
+  const extractedUrl = extractUrlFromText(rawInput);
   submission.extractedUrl = extractedUrl;
 
   if (!extractedUrl) {
     submission.parseStatus = "failed";
-    submission.textContent = submission.rawInput;
     submission.errorMessage = "怒怒没找到链接，再粘贴一次试试。";
     submission.updatedAt = new Date().toISOString();
-    return saveSubmission(submission);
+    return {
+      success: false,
+      data: submission,
+    };
   }
 
   const platform = detectPlatform(extractedUrl);
@@ -61,10 +65,12 @@ export async function parseSubmission(rawInput: string): Promise<Submission> {
 
   if (platform === "unsupported") {
     submission.parseStatus = "failed";
-    submission.textContent = submission.rawInput;
     submission.errorMessage = "怒怒现在只认识抖音和小红书链接。";
     submission.updatedAt = new Date().toISOString();
-    return saveSubmission(submission);
+    return {
+      success: false,
+      data: submission,
+    };
   }
 
   submission.parseStatus = "parsing";
@@ -72,7 +78,7 @@ export async function parseSubmission(rawInput: string): Promise<Submission> {
   const { resolvedUrl } = await resolveShortUrl(extractedUrl, platform);
   submission.resolvedUrl = resolvedUrl;
 
-  const metadata = await fetchMetadata(resolvedUrl, platform, submission.rawInput);
+  const metadata = await fetchMetadata(resolvedUrl, platform, rawInput);
   submission.title = metadata.title;
   submission.author = metadata.author;
   submission.coverUrl = metadata.coverUrl;
@@ -81,12 +87,7 @@ export async function parseSubmission(rawInput: string): Promise<Submission> {
   submission.videoUrl = videoDownload.videoUrl;
 
   const videoText = await extractTextFromVideo(videoDownload.videoUrl);
-  const textContent = [
-    metadata.title,
-    metadata.description,
-    videoText,
-    videoDownload.reason,
-  ]
+  const textContent = [metadata.title, metadata.description, videoText, videoDownload.reason]
     .filter(Boolean)
     .join("\n");
 
@@ -96,7 +97,10 @@ export async function parseSubmission(rawInput: string): Promise<Submission> {
     submission.parseStatus = "saved_only";
     submission.errorMessage = "暂时无法自动解析，但链接已记录";
     submission.updatedAt = new Date().toISOString();
-    return saveSubmission(submission);
+    return {
+      success: false,
+      data: submission,
+    };
   }
 
   const dish = extractDishNameFromText(textContent);
@@ -107,5 +111,8 @@ export async function parseSubmission(rawInput: string): Promise<Submission> {
   submission.errorMessage = dish.confidence < 0.35 ? (dish.message ?? null) : null;
   submission.updatedAt = new Date().toISOString();
 
-  return saveSubmission(submission);
+  return {
+    success: true,
+    data: submission,
+  };
 }

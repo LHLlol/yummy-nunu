@@ -1,16 +1,13 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { isVaultEntryCode, unlockVaultSession } from "@/lib/vault/access";
 
-interface AdminShortcutResponse {
-  success: boolean;
-  redirectTo?: string;
-  message?: string;
+interface VaultAccessFormProps {
+  onUnlocked?: () => void;
 }
 
-export default function VaultAccessForm() {
-  const router = useRouter();
+export default function VaultAccessForm({ onUnlocked }: VaultAccessFormProps) {
   const [code, setCode] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,22 +18,13 @@ export default function VaultAccessForm() {
     setMessage(null);
 
     try {
-      const response = await fetch("/api/admin/shortcut", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code }),
-      });
-      const result = (await response.json()) as AdminShortcutResponse;
-
-      if (!result.success) {
+      if (!isVaultEntryCode(code)) {
         setMessage("怒怒摇头：这不是那句口令。");
         return;
       }
 
-      window.sessionStorage.setItem("nunu_vault_unlocked", "true");
-      router.refresh();
+      unlockVaultSession();
+      onUnlocked?.();
     } catch {
       setMessage("怒怒暂时没听见，请再试一次。");
     } finally {

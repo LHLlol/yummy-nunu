@@ -1,17 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { downloadTextFile } from "@/lib/export/downloadTextFile";
+import { generateLinksMarkdown } from "@/lib/export/generateLinksMarkdown";
+import {
+  deleteLocalSubmission,
+  readLocalSubmissions,
+  updateLocalSubmission,
+} from "@/lib/storage/localSubmissions";
 import type { ReadStatus, Submission } from "@/types/submission";
-
-interface VaultRecordsProps {
-  initialSubmissions: Submission[];
-}
-
-interface SubmissionUpdateResponse {
-  success: boolean;
-  data?: Submission;
-  message?: string;
-}
 
 function platformLabel(platform: Submission["sourcePlatform"]) {
   if (platform === "douyin") {
@@ -22,7 +19,7 @@ function platformLabel(platform: Submission["sourcePlatform"]) {
     return "小红书";
   }
 
-  return "暂不支持";
+  return "其他";
 }
 
 function statusLabel(status: Submission["parseStatus"]) {
@@ -45,6 +42,27 @@ function readStatusLabel(status: ReadStatus) {
   return status === "read" ? "已读" : "未读";
 }
 
+function ownerStatusLabel(status: string | null | undefined) {
+  const labels: Record<string, string> = {
+    new: "新提交",
+    planned: "想安排",
+    queued: "已排队",
+    eaten: "已吃掉",
+    paused: "先放着",
+    新提交: "新提交",
+    想安排: "想安排",
+    已排队: "已排队",
+    已吃掉: "已吃掉",
+    先放着: "先放着",
+  };
+
+  if (!status) {
+    return "新提交";
+  }
+
+  return labels[status] ?? status;
+}
+
 function formatTime(value: string) {
   return new Date(value).toLocaleString("zh-CN", {
     month: "2-digit",
@@ -53,6 +71,15 @@ function formatTime(value: string) {
     minute: "2-digit",
     hour12: false,
   });
+}
+
+function exportDateStamp() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 function previewText(value: string) {
@@ -67,17 +94,24 @@ function previewText(value: string) {
 
 async function copyText(value: string | null) {
   if (!value) {
-    return;
+    return false;
   }
 
   await navigator.clipboard.writeText(value);
+  return true;
 }
 
-export default function VaultRecords({ initialSubmissions }: VaultRecordsProps) {
-  const [submissions, setSubmissions] = useState(initialSubmissions);
+export default function VaultRecords() {
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [documentText, setDocumentText] = useState("");
+  const [isDocumentVisible, setIsDocumentVisible] = useState(false);
+
+  useEffect(() => {
+    setSubmissions(readLocalSubmissions());
+  }, []);
 
   const stats = useMemo(() => {
     return {
@@ -87,57 +121,114 @@ export default function VaultRecords({ initialSubmissions }: VaultRecordsProps) 
     };
   }, [submissions]);
 
-  const updateReadStatus = async (submission: Submission) => {
+  const syncSubmissions = (nextSubmissions: Submission[]) => {
+    setSubmissions(nextSubmissions);
+
+    if (isDocumentVisible && documentText) {
+      setDocumentText(generateLinksMarkdown(nextSubmissions));
+    }
+  };
+
+  const getFreshDocument = () => {
+    const freshSubmissions = readLocalSubmissions();
+
+    if (freshSubmissions.length === 0) {
+      setSubmissions([]);
+      setMessage("怒怒的档案室还是空的，还没有可以汇总的链接。");
+      return null;
+    }
+
+    setSubmissions(freshSubmissions);
+    return generateLinksMarkdown(freshSubmissions);
+  };
+
+  const generateDocument = () => {
+    const markdown = getFreshDocument();
+
+    if (!markdown) {
+      setDocumentText("");
+      setIsDocumentVisible(false);
+      return;
+    }
+
+    setDocumentText(markdown);
+    setIsDocumentVisible(true);
+    setMessage("怒怒已经整理好链接汇总文档。");
+  };
+
+  const copyDocument = async () => {
+    const markdown = getFreshDocument();
+
+    if (!markdown) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(markdown);
+      setDocumentText(markdown);
+      setIsDocumentVisible(true);
+      setMessage("怒怒已经把汇总文档塞进剪贴板。");
+    } catch {
+      setDocumentText(markdown);
+      setIsDocumentVisible(true);
+      setMessage("怒怒没复制成功，可以手动选中文档内容。");
+    }
+  };
+
+  const downloadDocument = (extension: "md" | "txt") => {
+    const markdown = getFreshDocument();
+
+    if (!markdown) {
+      return;
+    }
+
+    const filename = `nunu-wish-links-${exportDateStamp()}.${extension}`;
+    const mimeType =
+      extension === "md" ? "text/markdown;charset=utf-8" : "text/plain;charset=utf-8";
+
+    setDocumentText(markdown);
+    setIsDocumentVisible(true);
+    downloadTextFile(filename, markdown, mimeType);
+  };
+
+  const updateReadStatus = (submission: Submission) => {
     const nextStatus: ReadStatus = submission.readStatus === "read" ? "unread" : "read";
     setBusyId(submission.id);
     setMessage(null);
 
-    try {
-      const response = await fetch(`/api/submissions/${submission.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          readStatus: nextStatus,
-        }),
-      });
-      const result = (await response.json()) as SubmissionUpdateResponse;
+    const updatedSubmission = updateLocalSubmission(submission.id, {
+      readStatus: nextStatus,
+    });
 
-      if (!response.ok || !result.success || !result.data) {
-        throw new Error(result.message ?? "更新失败");
-      }
-
-      setSubmissions((current) =>
-        current.map((item) => (item.id === submission.id ? result.data! : item)),
-      );
-    } catch {
+    if (!updatedSubmission) {
       setMessage("怒怒刚刚没按住标记，稍后再试一次。");
-    } finally {
       setBusyId(null);
+      return;
     }
+
+    const nextSubmissions = submissions.map((item) =>
+      item.id === submission.id ? updatedSubmission : item,
+    );
+    syncSubmissions(nextSubmissions);
+    setBusyId(null);
   };
 
-  const deleteRecord = async (submission: Submission) => {
+  const deleteRecord = (submission: Submission) => {
     setBusyId(submission.id);
     setMessage(null);
 
-    try {
-      const response = await fetch(`/api/submissions/${submission.id}`, {
-        method: "DELETE",
-      });
+    const deleted = deleteLocalSubmission(submission.id);
 
-      if (!response.ok) {
-        throw new Error("删除失败");
-      }
-
-      setSubmissions((current) => current.filter((item) => item.id !== submission.id));
-      setPendingDeleteId(null);
-    } catch {
+    if (!deleted) {
       setMessage("怒怒这次没忘干净，稍后再试。");
-    } finally {
       setBusyId(null);
+      return;
     }
+
+    const nextSubmissions = submissions.filter((item) => item.id !== submission.id);
+    syncSubmissions(nextSubmissions);
+    setPendingDeleteId(null);
+    setBusyId(null);
   };
 
   return (
@@ -169,6 +260,49 @@ export default function VaultRecords({ initialSubmissions }: VaultRecordsProps) 
         </p>
       )}
 
+      <section className="vault-export-panel" aria-label="怒怒汇总文档">
+        <div>
+          <p className="vault-export-kicker">EXPORT MENU</p>
+          <h2>怒怒汇总文档</h2>
+          <p>
+            把所有偷听到的视频链接整理成一份文档，方便你慢慢研究今天到底想吃什么。
+          </p>
+        </div>
+
+        <div className="vault-export-actions">
+          <button type="button" className="vault-action vault-action-hot" onClick={generateDocument}>
+            生成汇总文档
+          </button>
+          <button type="button" className="vault-action" onClick={copyDocument}>
+            复制文档
+          </button>
+          <button type="button" className="vault-action" onClick={() => downloadDocument("md")}>
+            下载 Markdown
+          </button>
+          <button type="button" className="vault-action" onClick={() => downloadDocument("txt")}>
+            下载 TXT
+          </button>
+          {isDocumentVisible && (
+            <button
+              type="button"
+              className="vault-action"
+              onClick={() => setIsDocumentVisible(false)}
+            >
+              收起文档
+            </button>
+          )}
+        </div>
+
+        {isDocumentVisible && documentText && (
+          <textarea
+            className="vault-export-preview"
+            readOnly
+            value={documentText}
+            aria-label="链接汇总文档预览"
+          />
+        )}
+      </section>
+
       {submissions.length === 0 ? (
         <div className="vault-empty">
           <p className="font-display text-2xl">还没有心愿被怒怒偷到。</p>
@@ -196,6 +330,9 @@ export default function VaultRecords({ initialSubmissions }: VaultRecordsProps) 
                     </span>
                     <span className="status-sticker bg-paper text-ink">
                       {statusLabel(submission.parseStatus)}
+                    </span>
+                    <span className="status-sticker bg-cream text-ink">
+                      {ownerStatusLabel(submission.ownerStatus)}
                     </span>
                   </div>
                   <time className="vault-time">{formatTime(submission.createdAt)}</time>
@@ -312,6 +449,8 @@ export default function VaultRecords({ initialSubmissions }: VaultRecordsProps) 
                       <p>提取链接：{submission.extractedUrl ?? "未找到"}</p>
                       <p>解析链接：{submission.resolvedUrl ?? "未展开"}</p>
                       <p>视频地址：{submission.videoUrl ?? "未获取"}</p>
+                      <p>处理状态：{ownerStatusLabel(submission.ownerStatus)}</p>
+                      <p>主人备注：{submission.ownerNote ?? "未填写"}</p>
                       <p>更新时间：{formatTime(submission.updatedAt)}</p>
                     </div>
 

@@ -591,6 +591,104 @@ summary {
   line-height: 1.8;
 }
 
+.vault-export-panel {
+  position: relative;
+  margin-top: 22px;
+  border: 4px solid var(--ink);
+  border-radius: 8px;
+  background:
+    linear-gradient(rgba(255, 225, 59, 0.12) 1px, transparent 1px),
+    var(--cream);
+  background-size: 100% 30px;
+  padding: 18px;
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.vault-export-panel::before {
+  content: "DOC";
+  position: absolute;
+  right: 18px;
+  top: -16px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: var(--chili);
+  color: var(--paper);
+  padding: 5px 11px;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family:
+    "Arial Black",
+    Impact,
+    "PingFang SC",
+    sans-serif;
+  font-size: 12px;
+  transform: rotate(5deg);
+}
+
+.vault-export-kicker {
+  display: inline-flex;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: #70b84b;
+  color: var(--paper);
+  padding: 4px 9px;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family:
+    "Arial Black",
+    Impact,
+    "PingFang SC",
+    sans-serif;
+  font-size: 11px;
+}
+
+.vault-export-panel h2 {
+  margin-top: 12px;
+  font-family:
+    "Arial Black",
+    Impact,
+    "PingFang SC",
+    sans-serif;
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  line-height: 1;
+}
+
+.vault-export-panel p {
+  margin-top: 10px;
+  max-width: 620px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.8;
+}
+
+.vault-export-actions {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.vault-export-preview {
+  margin-top: 16px;
+  min-height: 360px;
+  max-height: 58vh;
+  width: 100%;
+  resize: vertical;
+  overflow: auto;
+  border: 4px solid var(--ink);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 15px;
+  box-shadow: inset 0 -6px 0 rgba(23, 17, 13, 0.08);
+  color: var(--ink);
+  font-family:
+    "SFMono-Regular",
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  font-size: 13px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
 .vault-actions {
   margin-top: 16px;
   display: flex;
@@ -635,7 +733,8 @@ summary {
 }
 
 .vault-action-danger,
-.vault-confirm-danger {
+.vault-confirm-danger,
+.vault-action-hot {
   background: var(--chili);
   color: var(--paper);
 }
@@ -1856,6 +1955,24 @@ summary {
 
   .vault-actions {
     gap: 8px;
+  }
+
+  .vault-export-panel {
+    padding: 14px;
+  }
+
+  .vault-export-actions {
+    gap: 8px;
+  }
+
+  .vault-export-actions .vault-action {
+    flex: 1 1 132px;
+  }
+
+  .vault-export-preview {
+    min-height: 300px;
+    max-height: 54vh;
+    font-size: 12px;
   }
 
   .vault-action,
