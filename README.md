@@ -2,7 +2,7 @@
 
 ## 中文
 
-**《会偷吃心愿的怒怒》** 是一个围绕“想吃什么”展开的情绪化网页实验。
+**《会偷吃心愿的怒怒》** 是一个围绕“想吃什么”展开的情绪化网页实验。为后续yummy nunu这一点单网页做前期资源素材积累使用。
 
 项目以怒怒作为核心角色，将普通的链接提交动作转化为一次“投喂”互动。怒怒看起来暴躁、火焰熊熊，却会认真收下每一个突然冒出来的食欲心愿。
 
@@ -12,7 +12,7 @@
 
 ## English
 
-**Yummy Nunu** is an emotional web experiment built around the idea of food cravings.
+**Yummy Nunu** is an emotional web experiment built around the idea of food cravings.This is to accumulate preliminary resources and materials for the subsequent single webpage featuring yummy nunu.
 
 With Nunu as the central mascot, the project turns a simple link submission into a playful act of “feeding.” Nunu appears fiery, impatient, and grumpy, yet carefully receives every small craving given to it.
 
@@ -25,5 +25,5 @@ The visual style combines a bright yellow background, red-orange character desig
 This project is a personal creative web experiment.
 Please do not directly reuse the visual identity or character concept without permission.
 
-本项目为个人创意网页实验。
+本项目为个人创意网页实验，无任何盈利性质仅做个人创作尝试。
 请勿未经允许直接复用项目视觉设定与角色创意。
