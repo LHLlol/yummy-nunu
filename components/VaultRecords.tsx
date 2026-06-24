@@ -8,7 +8,15 @@ import {
   readLocalSubmissions,
   updateLocalSubmission,
 } from "@/lib/storage/localSubmissions";
-import type { ReadStatus, Submission } from "@/types/submission";
+import type { OwnerStatus, ReadStatus, Submission } from "@/types/submission";
+
+const OWNER_STATUS_OPTIONS: Array<{ value: OwnerStatus; label: string }> = [
+  { value: "new", label: "刚偷到" },
+  { value: "wanted", label: "想安排" },
+  { value: "planned", label: "已排队" },
+  { value: "cooked", label: "已吃掉" },
+  { value: "ignored", label: "先放着" },
+];
 
 function platformLabel(platform: Submission["sourcePlatform"]) {
   if (platform === "douyin") {
@@ -42,14 +50,17 @@ function readStatusLabel(status: ReadStatus) {
   return status === "read" ? "已读" : "未读";
 }
 
-function ownerStatusLabel(status: string | null | undefined) {
+function ownerStatusLabel(status: OwnerStatus | string | null | undefined) {
   const labels: Record<string, string> = {
-    new: "新提交",
-    planned: "想安排",
+    new: "刚偷到",
+    wanted: "想安排",
+    planned: "已排队",
+    cooked: "已吃掉",
+    ignored: "先放着",
     queued: "已排队",
     eaten: "已吃掉",
     paused: "先放着",
-    新提交: "新提交",
+    新提交: "刚偷到",
     想安排: "想安排",
     已排队: "已排队",
     已吃掉: "已吃掉",
@@ -57,7 +68,7 @@ function ownerStatusLabel(status: string | null | undefined) {
   };
 
   if (!status) {
-    return "新提交";
+    return "刚偷到";
   }
 
   return labels[status] ?? status;
@@ -117,7 +128,7 @@ export default function VaultRecords() {
     return {
       total: submissions.length,
       unread: submissions.filter((submission) => submission.readStatus !== "read").length,
-      identified: submissions.filter((submission) => submission.parseStatus === "success").length,
+      cooked: submissions.filter((submission) => submission.ownerStatus === "cooked").length,
     };
   }, [submissions]);
 
@@ -213,6 +224,38 @@ export default function VaultRecords() {
     setBusyId(null);
   };
 
+  const updateOwnerStatus = (submission: Submission, ownerStatus: OwnerStatus) => {
+    const updatedSubmission = updateLocalSubmission(submission.id, {
+      ownerStatus,
+    });
+
+    if (!updatedSubmission) {
+      setMessage("怒怒刚刚没夹住这份档案，稍后再试。");
+      return;
+    }
+
+    const nextSubmissions = submissions.map((item) =>
+      item.id === submission.id ? updatedSubmission : item,
+    );
+    syncSubmissions(nextSubmissions);
+  };
+
+  const updateOwnerNote = (submission: Submission, ownerNote: string) => {
+    const updatedSubmission = updateLocalSubmission(submission.id, {
+      ownerNote,
+    });
+
+    if (!updatedSubmission) {
+      setMessage("怒怒刚刚没写上备注，稍后再试。");
+      return;
+    }
+
+    const nextSubmissions = submissions.map((item) =>
+      item.id === submission.id ? updatedSubmission : item,
+    );
+    syncSubmissions(nextSubmissions);
+  };
+
   const deleteRecord = (submission: Submission) => {
     setBusyId(submission.id);
     setMessage(null);
@@ -236,7 +279,8 @@ export default function VaultRecords() {
       <div className="vault-header">
         <div>
           <p className="vault-kicker">NUNU VAULT</p>
-          <h1 className="vault-title">怒怒偷来的心愿</h1>
+          <h1 className="vault-title">怒怒偷吃档案室</h1>
+          <p className="vault-subtitle">这里藏着所有被怒怒偷偷记下来的想吃心愿。</p>
         </div>
         <div className="vault-stats">
           <div>
@@ -248,8 +292,8 @@ export default function VaultRecords() {
             <strong>{stats.unread}</strong>
           </div>
           <div>
-            <span>已识别</span>
-            <strong>{stats.identified}</strong>
+            <span>已吃掉</span>
+            <strong>{stats.cooked}</strong>
           </div>
         </div>
       </div>
@@ -351,6 +395,35 @@ export default function VaultRecords() {
                   <p>置信度：{Math.round(submission.confidence * 100)}%</p>
                 </div>
 
+                <div className="vault-edit-grid">
+                  <label className="vault-field">
+                    <span>处理状态</span>
+                    <select
+                      className="vault-select"
+                      value={submission.ownerStatus}
+                      onChange={(event) =>
+                        updateOwnerStatus(submission, event.target.value as OwnerStatus)
+                      }
+                    >
+                      {OWNER_STATUS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="vault-field vault-note-field">
+                    <span>主人备注</span>
+                    <textarea
+                      className="vault-note-input"
+                      value={submission.ownerNote}
+                      onChange={(event) => updateOwnerNote(submission, event.target.value)}
+                      placeholder="比如：周末安排、想做辣一点、先别告诉她……"
+                      rows={2}
+                    />
+                  </label>
+                </div>
+
                 {submission.dishCandidates.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {submission.dishCandidates.map((candidate) => (
@@ -450,7 +523,7 @@ export default function VaultRecords() {
                       <p>解析链接：{submission.resolvedUrl ?? "未展开"}</p>
                       <p>视频地址：{submission.videoUrl ?? "未获取"}</p>
                       <p>处理状态：{ownerStatusLabel(submission.ownerStatus)}</p>
-                      <p>主人备注：{submission.ownerNote ?? "未填写"}</p>
+                      <p>主人备注：{submission.ownerNote || "未填写"}</p>
                       <p>更新时间：{formatTime(submission.updatedAt)}</p>
                     </div>
 

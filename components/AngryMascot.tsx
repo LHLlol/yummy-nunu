@@ -127,21 +127,22 @@ export default function AngryMascot({ state = "idle" }: AngryMascotProps) {
         </div>
       )}
 
-      <div className="flame flame-back">
-        <span />
-        <span />
-        <span />
+      <div className="flame-plume" aria-hidden="true">
+        <span className="flame-glow" />
+        <span className="flame-tongue flame-tongue-1" />
+        <span className="flame-tongue flame-tongue-2" />
+        <span className="flame-tongue flame-tongue-3" />
+        <span className="flame-tongue flame-tongue-4" />
+        <span className="flame-tongue flame-tongue-5" />
+        <span className="flame-tongue flame-tongue-6" />
       </div>
 
-      <div className="mascot-body">
-        <div className="flame flame-front">
-          <span />
-          <span />
-          <span />
-        </div>
-
+      <div className="mascot-head-body">
+        <div className="body-grain" />
         <div className="mascot-brow brow-left" />
         <div className="mascot-brow brow-right" />
+        <div className="lower-eye-fold fold-left" />
+        <div className="lower-eye-fold fold-right" />
 
         <div className="mascot-eye eye-left">
           <div className="mascot-pupil" style={pupilStyle}>
@@ -165,18 +166,38 @@ export default function AngryMascot({ state = "idle" }: AngryMascotProps) {
 
         <div className="mascot-cheek cheek-left" />
         <div className="mascot-cheek cheek-right" />
-        <div className="mascot-bib">WISH</div>
+        <div className="mascot-shirt">
+          <span className="shirt-pocket" />
+          <span className="shirt-button button-1" />
+          <span className="shirt-button button-2" />
+        </div>
+        <div className="shirt-collar collar-left" />
+        <div className="shirt-collar collar-right" />
+        <div className="mascot-tie">
+          <span className="tie-knot" />
+          <span className="tie-blade" />
+        </div>
+        <div className="mascot-belt">
+          <span />
+        </div>
       </div>
 
-      <div className="mascot-arm arm-left" />
-      <div className="mascot-arm arm-right" />
-      <div className="mascot-leg leg-left" />
-      <div className="mascot-leg leg-right" />
-
-      <div className="mascot-fork">
-        <span />
+      <div className="mascot-arm arm-left">
+        <span className="shirt-sleeve" />
+        <span className="mascot-fist" />
       </div>
-      <div className="mascot-chili">辣</div>
+      <div className="mascot-arm arm-right">
+        <span className="shirt-sleeve" />
+        <span className="mascot-fist" />
+      </div>
+      <div className="mascot-pants">
+        <div className="pant-leg pant-left">
+          <span className="pant-cuff" />
+        </div>
+        <div className="pant-leg pant-right">
+          <span className="pant-cuff" />
+        </div>
+      </div>
     </div>
   );
 }

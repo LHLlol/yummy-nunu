@@ -30,7 +30,7 @@ export default function VaultClient() {
         <section className="vault-shell vault-lock-shell">
           <div>
             <p className="vault-kicker">NUNU VAULT</p>
-            <h1 className="vault-title">心愿小库</h1>
+            <h1 className="vault-title">怒怒偷吃档案室</h1>
             <p className="mt-4 max-w-md text-sm leading-7">
               这里用来整理投喂过来的美食心愿。没有口令时，怒怒会守在门口。
             </p>

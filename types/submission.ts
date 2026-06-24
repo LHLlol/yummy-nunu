@@ -9,6 +9,8 @@ export type ParseStatus =
 
 export type ReadStatus = "unread" | "read";
 
+export type OwnerStatus = "new" | "wanted" | "planned" | "cooked" | "ignored";
+
 export interface Submission {
   id: string;
   rawInput: string;
@@ -26,8 +28,8 @@ export interface Submission {
   parseStatus: ParseStatus;
   errorMessage: string | null;
   readStatus: ReadStatus;
-  ownerStatus?: string | null;
-  ownerNote?: string | null;
+  ownerStatus: OwnerStatus;
+  ownerNote: string;
   createdAt: string;
   updatedAt: string;
 }

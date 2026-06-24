@@ -28,7 +28,7 @@ function createBaseSubmission(rawInput: string): Submission {
     errorMessage: null,
     readStatus: "unread",
     ownerStatus: "new",
-    ownerNote: null,
+    ownerNote: "",
     createdAt: now,
     updatedAt: now,
   };
@@ -65,7 +65,7 @@ export async function parseSubmissionClient(rawInput: string): Promise<ParseApiR
 
   if (platform === "unsupported") {
     submission.parseStatus = "failed";
-    submission.errorMessage = "怒怒现在只认识抖音和小红书链接。";
+    submission.errorMessage = "怒怒现在只认识抖音和小红书。";
     submission.updatedAt = new Date().toISOString();
     return {
       success: false,
@@ -107,8 +107,8 @@ export async function parseSubmissionClient(rawInput: string): Promise<ParseApiR
   submission.extractedDishName = dish.dishName;
   submission.dishCandidates = dish.candidates;
   submission.confidence = dish.confidence;
-  submission.parseStatus = "success";
-  submission.errorMessage = dish.confidence < 0.35 ? (dish.message ?? null) : null;
+  submission.parseStatus = "saved_only";
+  submission.errorMessage = null;
   submission.updatedAt = new Date().toISOString();
 
   return {

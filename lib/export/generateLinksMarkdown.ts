@@ -1,4 +1,4 @@
-import type { ReadStatus, SourcePlatform, Submission } from "@/types/submission";
+import type { OwnerStatus, ReadStatus, SourcePlatform, Submission } from "@/types/submission";
 
 function platformLabel(platform: SourcePlatform) {
   if (platform === "douyin") {
@@ -16,14 +16,17 @@ function readStatusLabel(status: ReadStatus | undefined) {
   return status === "read" ? "已读" : "未读";
 }
 
-function ownerStatusLabel(status: string | null | undefined) {
+function ownerStatusLabel(status: OwnerStatus | string | null | undefined) {
   const labels: Record<string, string> = {
-    new: "新提交",
-    planned: "想安排",
+    new: "刚偷到",
+    wanted: "想安排",
+    planned: "已排队",
     queued: "已排队",
+    cooked: "已吃掉",
     eaten: "已吃掉",
+    ignored: "先放着",
     paused: "先放着",
-    新提交: "新提交",
+    新提交: "刚偷到",
     想安排: "想安排",
     已排队: "已排队",
     已吃掉: "已吃掉",
@@ -31,7 +34,7 @@ function ownerStatusLabel(status: string | null | undefined) {
   };
 
   if (!status) {
-    return "新提交";
+    return "刚偷到";
   }
 
   return labels[status] ?? status;
@@ -110,7 +113,7 @@ export function generateLinksMarkdown(submissions: Submission[]): string {
       `- 作者：${safeText(submission.author)}`,
       `- 视频链接：${safeText(submission.extractedUrl, "未识别")}`,
       `- 提交时间：${formatDateTime(submission.createdAt)}`,
-      `- 备注：${safeText(submission.ownerNote, "未填写")}`,
+      `- 备注：${safeText(submission.ownerNote, "暂无")}`,
       "",
       "### 原始投喂文本",
       "",

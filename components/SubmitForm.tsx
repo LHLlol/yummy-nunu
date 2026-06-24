@@ -44,7 +44,10 @@ export default function SubmitForm({ onMascotStateChange }: SubmitFormProps) {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const value = rawInput.trim();
+    const form = event.currentTarget;
+    const currentInput =
+      (form.elements.namedItem("rawInput") as HTMLTextAreaElement | null)?.value ?? rawInput;
+    const value = currentInput.trim();
 
     if (!value) {
       onMascotStateChange?.("error");
@@ -63,17 +66,18 @@ export default function SubmitForm({ onMascotStateChange }: SubmitFormProps) {
         onMascotStateChange?.("unlocked");
         unlockVaultSession();
         await wait(950);
-        router.push("/nunu-vault");
+        router.push("/nunu-vault/");
         return;
       }
 
-      const result = await parseSubmissionClient(rawInput);
+      const result = await parseSubmissionClient(currentInput);
 
       if (result.success) {
         const savedSubmission = saveLocalSubmission(result.data);
         setSubmission(savedSubmission);
         onMascotStateChange?.("received");
         setFormMessage(null);
+        setRawInput("");
       } else {
         setSubmission(result.data);
         onMascotStateChange?.("error");
@@ -84,7 +88,7 @@ export default function SubmitForm({ onMascotStateChange }: SubmitFormProps) {
       const now = new Date().toISOString();
       setSubmission({
         id: crypto.randomUUID(),
-        rawInput,
+        rawInput: currentInput,
         extractedUrl,
         resolvedUrl: extractedUrl,
         sourcePlatform: detectedPlatform,
@@ -92,15 +96,15 @@ export default function SubmitForm({ onMascotStateChange }: SubmitFormProps) {
         author: null,
         coverUrl: null,
         videoUrl: null,
-        textContent: rawInput,
+        textContent: currentInput,
         extractedDishName: null,
         dishCandidates: [],
         confidence: 0,
         parseStatus: "failed",
         errorMessage: "怒怒这次被辣到断线了，请稍后再试。",
         readStatus: "unread",
-        ownerStatus: null,
-        ownerNote: null,
+        ownerStatus: "new",
+        ownerNote: "",
         createdAt: now,
         updatedAt: now,
       });
@@ -145,6 +149,7 @@ export default function SubmitForm({ onMascotStateChange }: SubmitFormProps) {
 
         <textarea
           id="wish-input"
+          name="rawInput"
           value={rawInput}
           onChange={(event) => {
             setRawInput(event.target.value);

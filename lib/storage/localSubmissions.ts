@@ -1,4 +1,4 @@
-import type { ReadStatus, Submission } from "@/types/submission";
+import type { OwnerStatus, ReadStatus, Submission } from "@/types/submission";
 
 const SUBMISSIONS_STORAGE_KEY = "nunu_submissions";
 const LEGACY_STORAGE_KEYS = ["submissions"];
@@ -9,6 +9,24 @@ function canUseStorage() {
 
 export function normalizeLocalSubmission(submission: Partial<Submission>): Submission {
   const createdAt = submission.createdAt ?? new Date().toISOString();
+  const legacyOwnerStatusMap: Record<string, OwnerStatus> = {
+    queued: "planned",
+    eaten: "cooked",
+    paused: "ignored",
+    新提交: "new",
+    想安排: "wanted",
+    已排队: "planned",
+    已吃掉: "cooked",
+    先放着: "ignored",
+  };
+  const ownerStatuses: OwnerStatus[] = ["new", "wanted", "planned", "cooked", "ignored"];
+  const rawOwnerStatus = submission.ownerStatus ?? "new";
+  const ownerStatus =
+    rawOwnerStatus in legacyOwnerStatusMap
+      ? legacyOwnerStatusMap[rawOwnerStatus]
+      : ownerStatuses.includes(rawOwnerStatus as OwnerStatus)
+        ? (rawOwnerStatus as OwnerStatus)
+        : "new";
 
   return {
     id: submission.id ?? crypto.randomUUID(),
@@ -27,8 +45,8 @@ export function normalizeLocalSubmission(submission: Partial<Submission>): Submi
     parseStatus: submission.parseStatus ?? "saved_only",
     errorMessage: submission.errorMessage ?? null,
     readStatus: submission.readStatus ?? "unread",
-    ownerStatus: submission.ownerStatus ?? "new",
-    ownerNote: submission.ownerNote ?? null,
+    ownerStatus,
+    ownerNote: submission.ownerNote ?? "",
     createdAt,
     updatedAt: submission.updatedAt ?? createdAt,
   };
@@ -101,8 +119,8 @@ export function updateLocalSubmission(
   id: string,
   updates: {
     readStatus?: ReadStatus;
-    ownerStatus?: string | null;
-    ownerNote?: string | null;
+    ownerStatus?: OwnerStatus;
+    ownerNote?: string;
   },
 ): Submission | null {
   const submissions = readLocalSubmissions();

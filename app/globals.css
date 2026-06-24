@@ -413,6 +413,14 @@ summary {
   line-height: 0.96;
 }
 
+.vault-subtitle {
+  margin-top: 10px;
+  max-width: 560px;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.8;
+}
+
 .vault-lock-box {
   width: 100%;
   max-width: 420px;
@@ -499,6 +507,24 @@ summary {
   padding: 18px;
 }
 
+.vault-record::before {
+  content: "WISH FILE";
+  display: inline-flex;
+  margin-bottom: 12px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: var(--flame);
+  padding: 4px 9px;
+  box-shadow: 3px 3px 0 var(--ink);
+  color: var(--paper);
+  font-family:
+    "Arial Black",
+    Impact,
+    "PingFang SC",
+    sans-serif;
+  font-size: 11px;
+}
+
 .vault-record-unread {
   background:
     linear-gradient(90deg, rgba(255, 122, 26, 0.15), transparent 52%),
@@ -560,6 +586,53 @@ summary {
 .vault-link {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.vault-edit-grid {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(160px, 0.42fr) minmax(0, 1fr);
+}
+
+.vault-field {
+  min-width: 0;
+}
+
+.vault-field span {
+  display: block;
+  margin-bottom: 6px;
+  font-family:
+    "Arial Black",
+    Impact,
+    "PingFang SC",
+    sans-serif;
+  font-size: 12px;
+}
+
+.vault-select,
+.vault-note-input {
+  width: 100%;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 9px 10px;
+  color: var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  outline: none;
+}
+
+.vault-note-input {
+  min-height: 76px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.vault-select:focus,
+.vault-note-input:focus {
+  box-shadow:
+    3px 3px 0 var(--ink),
+    0 0 0 4px rgba(233, 54, 32, 0.22);
 }
 
 .vault-raw-preview,
@@ -1819,6 +1892,178 @@ summary {
   animation: wiggle 1.5s ease-in-out infinite;
 }
 
+/* Restored reference-style Nunu mascot: squat office outfit, big flame head. */
+.mascot-state-received .mascot-head-body {
+  transform: translateX(-50%) rotate(-1deg);
+}
+
+.mascot-state-error .mascot-head-body {
+  transform: translateX(-50%) rotate(1.5deg);
+}
+
+.mascot-state-unlocked .flame-tongue {
+  animation-duration: 520ms;
+}
+
+.mascot-stage .mascot-shadow {
+  bottom: 12px;
+  width: 74%;
+  height: 42px;
+  background: rgba(23, 17, 13, 0.22);
+}
+
+.mascot-stage .mascot-head-body {
+  position: absolute;
+  left: 50%;
+  top: 158px;
+  z-index: 3;
+  width: 272px;
+  height: 302px;
+  overflow: hidden;
+  border: 6px solid var(--ink);
+  border-radius: 48px 48px 30px 30px;
+  background: var(--chili);
+  box-shadow: 7px 8px 0 var(--ink);
+  transform: translateX(-50%);
+  transition: transform 180ms ease;
+}
+
+.mascot-stage .mascot-head-body .mascot-eye {
+  top: 68px;
+  z-index: 5;
+  width: 96px;
+  height: 40px;
+  border-width: 5px;
+}
+
+.mascot-stage .mascot-head-body .eye-left {
+  left: 26px;
+  border-radius: 56% 44% 46% 54%;
+  clip-path: polygon(0 20%, 100% 0, 92% 100%, 8% 82%);
+  transform: rotate(-5deg);
+}
+
+.mascot-stage .mascot-head-body .eye-right {
+  right: 26px;
+  border-radius: 44% 56% 54% 46%;
+  clip-path: polygon(0 0, 100% 20%, 92% 82%, 8% 100%);
+  transform: rotate(5deg);
+}
+
+.mascot-stage .mascot-head-body .mascot-pupil {
+  left: 39px;
+  top: 10px;
+  width: 17px;
+  height: 17px;
+  background:
+    radial-gradient(circle at 52% 48%, #ff9b20 0 26%, transparent 28%),
+    #3a120e;
+  transition: transform 155ms ease-out;
+}
+
+.mascot-stage .mascot-head-body .mascot-brow {
+  top: 54px;
+  z-index: 6;
+  width: 112px;
+  height: 21px;
+}
+
+.mascot-stage .mascot-head-body .brow-left {
+  left: 18px;
+  transform: rotate(13deg);
+}
+
+.mascot-stage .mascot-head-body .brow-right {
+  right: 18px;
+  transform: rotate(-13deg);
+}
+
+.mascot-stage .mascot-head-body .mascot-mouth {
+  top: 142px;
+  z-index: 5;
+  width: 152px;
+  height: 44px;
+  border-radius: 18px 18px 9px 9px;
+  background: #3d110d;
+  box-shadow: 0 4px 0 var(--ink);
+}
+
+.mascot-state-unlocked .mascot-head-body .mascot-mouth {
+  height: 34px;
+  border-radius: 14px 14px 10px 10px;
+}
+
+.mascot-stage .mascot-head-body .mascot-mouth::before {
+  content: "";
+  position: absolute;
+  inset: 5px 9px auto;
+  height: 25px;
+  border: 3px solid var(--ink);
+  border-radius: 5px;
+  background: #fffdf2;
+}
+
+.mascot-stage .mascot-head-body .mascot-mouth::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 20px;
+  height: 3px;
+  background: var(--ink);
+}
+
+.mascot-stage .mascot-head-body .teeth-row {
+  position: absolute;
+  inset: 8px 14px auto;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  height: 22px;
+  border-bottom: 0;
+  background: transparent;
+}
+
+.mascot-stage .mascot-head-body .teeth-row span + span {
+  border-left: 3px solid rgba(23, 17, 13, 0.72);
+}
+
+.mascot-stage .mascot-head-body .mascot-cheek {
+  top: 129px;
+  z-index: 4;
+  width: 25px;
+  height: 12px;
+  border-color: rgba(23, 17, 13, 0.55);
+  background: rgba(255, 126, 94, 0.62);
+}
+
+.mascot-stage .mascot-head-body .cheek-left {
+  left: 20px;
+}
+
+.mascot-stage .mascot-head-body .cheek-right {
+  right: 20px;
+}
+
+.mascot-stage > .mascot-arm {
+  top: 284px;
+  z-index: 2;
+  width: 62px;
+  height: 132px;
+  border: 6px solid var(--ink);
+  border-radius: 26px 26px 30px 30px;
+}
+
+.mascot-stage > .arm-left {
+  left: 42px;
+  transform: rotate(7deg);
+}
+
+.mascot-stage > .arm-right {
+  right: 42px;
+  transform: rotate(-7deg);
+}
+
 .doodle {
   position: absolute;
   color: var(--ink);
@@ -1955,6 +2200,10 @@ summary {
 
   .vault-actions {
     gap: 8px;
+  }
+
+  .vault-edit-grid {
+    grid-template-columns: 1fr;
   }
 
   .vault-export-panel {
