@@ -1543,41 +1543,6 @@ summary {
   color: var(--paper);
 }
 
-.mascot-eye-rig {
-  overflow: visible;
-}
-
-.mascot-eye-white {
-  filter: url("#mascot-eye-inset");
-  stroke: rgba(74, 17, 10, 0.22);
-  stroke-width: 1.2;
-}
-
-.mascot-eye-shade {
-  fill: rgba(103, 31, 14, 0.16);
-  mix-blend-mode: multiply;
-}
-
-.mascot-eye-pupil {
-  transform: translate3d(var(--eye-x, 0px), var(--eye-y, 0px), 0);
-  transform-box: fill-box;
-  transform-origin: center;
-  will-change: transform;
-}
-
-.mascot-eye-pupil-shadow {
-  fill: rgba(48, 11, 6, 0.32);
-  filter: blur(0.5px);
-}
-
-.mascot-eye-pupil-core {
-  filter: url("#mascot-pupil-soft");
-}
-
-.mascot-eye-pupil-highlight {
-  fill: rgba(255, 253, 242, 0.88);
-}
-
 .mascot-shadow {
   position: absolute;
   left: 50%;
