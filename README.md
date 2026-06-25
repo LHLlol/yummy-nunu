@@ -35,6 +35,19 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 
 New submissions are written to the shared `links` table. The vault reads the same table and refreshes every 8 seconds.
 
+## Supabase Configuration
+
+This project uses Supabase for cross-device submission syncing.
+
+Required environment variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+For GitHub Pages deployment, add them in:
+
+GitHub Repository → Settings → Secrets and variables → Actions → Repository secrets
+
 ---
 
 ## License

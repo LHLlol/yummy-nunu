@@ -5,8 +5,10 @@ import { downloadTextFile } from "@/lib/export/downloadTextFile";
 import { generateLinksMarkdown } from "@/lib/export/generateLinksMarkdown";
 import {
   deleteRemoteSubmission,
+  isSupabaseConfigured,
   normalizeSubmission,
   readRemoteSubmissions,
+  SUPABASE_CONFIG_MISSING_MESSAGE,
   SubmissionStorageError,
   updateRemoteSubmission,
 } from "@/lib/storage/remoteSubmissions";
@@ -168,7 +170,7 @@ export default function VaultRecords() {
       try {
         const freshSubmissions = await readRemoteSubmissions();
         syncSubmissions(freshSubmissions);
-        setMessage(null);
+        setMessage(isSupabaseConfigured() ? null : SUPABASE_CONFIG_MISSING_MESSAGE);
       } catch (error) {
         if (!silent) {
           setSubmissions([]);

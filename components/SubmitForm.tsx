@@ -8,6 +8,7 @@ import { extractUrlFromText } from "@/lib/parser/extractUrlFromText";
 import { parseSubmissionClient } from "@/lib/parser/parseSubmissionClient";
 import {
   getClientSourceInfo,
+  isSupabaseConfigured,
   normalizeSubmission,
   saveRemoteSubmission,
   SubmissionStorageError,
@@ -86,7 +87,11 @@ export default function SubmitForm({ onMascotStateChange }: SubmitFormProps) {
         );
         setSubmission(savedSubmission);
         onMascotStateChange?.("received");
-        setFormMessage("提交成功，怒怒已经把链接收进后台。");
+        setFormMessage(
+          isSupabaseConfigured()
+            ? "提交成功，怒怒已经把链接收进后台。"
+            : "提交成功，已暂存在本机；配置 Supabase 后可跨设备同步。",
+        );
         setRawInput("");
       } else {
         setSubmission(result.data);

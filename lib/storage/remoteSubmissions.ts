@@ -1,8 +1,12 @@
 import type { OwnerStatus, ParseStatus, ReadStatus, SourcePlatform, Submission } from "@/types/submission";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/+$/, "") ?? "";
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/+$/, "") ?? "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const LINKS_SELECT = "id,url,created_at,updated_at,source,user_agent,is_valid,payload";
+const LOCAL_SUBMISSIONS_STORAGE_KEY = "nunu_submissions";
+
+export const SUPABASE_CONFIG_MISSING_MESSAGE =
+  "线上数据库还没有配置，请在 GitHub Secrets 中设置 NEXT_PUBLIC_SUPABASE_URL 和 NEXT_PUBLIC_SUPABASE_ANON_KEY。";
 
 export class SubmissionStorageError extends Error {
   constructor(message: string) {
@@ -111,8 +115,14 @@ function normalizeNullableString(value: unknown) {
   return typeof value === "string" && value.trim() ? value : null;
 }
 
-export function isRemoteStorageConfigured() {
-  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+export function isSupabaseConfigured() {
+  return Boolean(supabaseUrl && supabaseAnonKey);
+}
+
+export const isRemoteStorageConfigured = isSupabaseConfigured;
+
+function canUseLocalStorage() {
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
 
 export function normalizeSubmission(submission: Partial<Submission>): Submission {
@@ -205,21 +215,19 @@ export function getClientSourceInfo() {
 }
 
 function getSupabaseEndpoint(path: string) {
-  if (!isRemoteStorageConfigured()) {
-    throw new SubmissionStorageError(
-      "线上数据库还没有配置。请设置 NEXT_PUBLIC_SUPABASE_URL 和 NEXT_PUBLIC_SUPABASE_ANON_KEY。",
-    );
+  if (!isSupabaseConfigured()) {
+    throw new SubmissionStorageError(SUPABASE_CONFIG_MISSING_MESSAGE);
   }
 
-  return `${SUPABASE_URL}/rest/v1/${path}`;
+  return `${supabaseUrl}/rest/v1/${path}`;
 }
 
 async function supabaseRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(getSupabaseEndpoint(path), {
     ...init,
     headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
       "Content-Type": "application/json",
       ...(init.headers ?? {}),
     },
@@ -323,7 +331,86 @@ function sortNewestFirst(submissions: Submission[]) {
   });
 }
 
+function parseLocalSubmissions(value: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.map((item) => normalizeSubmission(item as Partial<Submission>));
+  } catch {
+    return [];
+  }
+}
+
+function readLocalSubmissions() {
+  if (!canUseLocalStorage()) {
+    return [];
+  }
+
+  return sortNewestFirst(
+    parseLocalSubmissions(window.localStorage.getItem(LOCAL_SUBMISSIONS_STORAGE_KEY)),
+  );
+}
+
+function writeLocalSubmissions(submissions: Submission[]) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  window.localStorage.setItem(
+    LOCAL_SUBMISSIONS_STORAGE_KEY,
+    JSON.stringify(sortNewestFirst(submissions)),
+  );
+}
+
+function saveLocalSubmission(submission: Submission) {
+  const normalizedSubmission = normalizeSubmission(submission);
+  const submissions = readLocalSubmissions();
+  const nextSubmissions = [
+    normalizedSubmission,
+    ...submissions.filter((item) => item.id !== normalizedSubmission.id),
+  ];
+
+  writeLocalSubmissions(nextSubmissions);
+  return normalizedSubmission;
+}
+
+function updateLocalSubmission(submission: Submission, updates: SubmissionUpdates) {
+  const updatedSubmission = normalizeSubmission({
+    ...submission,
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  });
+  const submissions = readLocalSubmissions();
+  const nextSubmissions = submissions.map((item) =>
+    item.id === submission.id ? updatedSubmission : item,
+  );
+  const hasExistingSubmission = submissions.some((item) => item.id === submission.id);
+
+  writeLocalSubmissions(hasExistingSubmission ? nextSubmissions : [updatedSubmission, ...submissions]);
+  return updatedSubmission;
+}
+
+function deleteLocalSubmission(id: string) {
+  const submissions = readLocalSubmissions();
+  const nextSubmissions = submissions.filter((submission) => submission.id !== id);
+
+  writeLocalSubmissions(nextSubmissions);
+  return nextSubmissions.length !== submissions.length;
+}
+
 export async function readRemoteSubmissions(): Promise<Submission[]> {
+  if (!isSupabaseConfigured()) {
+    return readLocalSubmissions();
+  }
+
   const rows = await supabaseRequest<LinkRow[]>(
     `links?select=${LINKS_SELECT}&order=created_at.desc`,
   );
@@ -333,6 +420,11 @@ export async function readRemoteSubmissions(): Promise<Submission[]> {
 
 export async function saveRemoteSubmission(submission: Submission): Promise<Submission> {
   const normalizedSubmission = normalizeSubmission(submission);
+
+  if (!isSupabaseConfigured()) {
+    return saveLocalSubmission(normalizedSubmission);
+  }
+
   const rows = await supabaseRequest<LinkRow[]>(
     `links?select=${LINKS_SELECT}`,
     {
@@ -356,6 +448,11 @@ export async function updateRemoteSubmission(
     ...updates,
     updatedAt: new Date().toISOString(),
   });
+
+  if (!isSupabaseConfigured()) {
+    return updateLocalSubmission(submission, updates);
+  }
+
   const rows = await supabaseRequest<LinkRow[]>(
     `links?id=eq.${encodeURIComponent(submission.id)}&select=${LINKS_SELECT}`,
     {
@@ -374,6 +471,10 @@ export async function updateRemoteSubmission(
 }
 
 export async function deleteRemoteSubmission(id: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    return deleteLocalSubmission(id);
+  }
+
   const rows = await supabaseRequest<Array<{ id: string }>>(
     `links?id=eq.${encodeURIComponent(id)}&select=id`,
     {
