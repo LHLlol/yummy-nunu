@@ -112,6 +112,8 @@ export function generateLinksMarkdown(submissions: Submission[]): string {
       `- 视频标题：${safeText(submission.title)}`,
       `- 作者：${safeText(submission.author)}`,
       `- 视频链接：${safeText(submission.extractedUrl, "未识别")}`,
+      `- 链接有效性：${submission.isValidUrl ? "有效链接" : "链接异常"}`,
+      `- 来源设备：${safeText(submission.source)}`,
       `- 提交时间：${formatDateTime(submission.createdAt)}`,
       `- 备注：${safeText(submission.ownerNote, "暂无")}`,
       "",

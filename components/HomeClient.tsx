@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AngryMascot, { type MascotState } from "@/components/AngryMascot";
+import FallingDecorations from "@/components/FallingDecorations";
 import HandDrawnDecorations from "@/components/HandDrawnDecorations";
 import SubmitForm from "@/components/SubmitForm";
 
@@ -11,6 +12,7 @@ export default function HomeClient() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-yolk text-ink">
       <HandDrawnDecorations />
+      <FallingDecorations />
 
       <div className="relative z-10 flex min-h-screen flex-col">
         <div className="ticker-strip border-b-[3px] border-ink bg-ink py-2 text-cream">

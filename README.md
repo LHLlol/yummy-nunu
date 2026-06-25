@@ -20,6 +20,23 @@ The visual style combines a bright yellow background, red-orange character desig
 
 ---
 
+## Link Sync Setup
+
+This project is configured for static export, so cross-device link sync uses Supabase.
+
+1. Create a Supabase project.
+2. Run `supabase-links.sql` in the Supabase SQL editor.
+3. Set these environment variables before building or deploying:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+New submissions are written to the shared `links` table. The vault reads the same table and refreshes every 8 seconds.
+
+---
+
 ## License
 
 This project is a personal creative web experiment.

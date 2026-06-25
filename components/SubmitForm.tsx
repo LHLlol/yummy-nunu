@@ -6,7 +6,12 @@ import type { MascotState } from "@/components/AngryMascot";
 import { detectPlatform } from "@/lib/parser/detectPlatform";
 import { extractUrlFromText } from "@/lib/parser/extractUrlFromText";
 import { parseSubmissionClient } from "@/lib/parser/parseSubmissionClient";
-import { saveLocalSubmission } from "@/lib/storage/localSubmissions";
+import {
+  getClientSourceInfo,
+  normalizeSubmission,
+  saveRemoteSubmission,
+  SubmissionStorageError,
+} from "@/lib/storage/remoteSubmissions";
 import { isVaultEntryCode, unlockVaultSession } from "@/lib/vault/access";
 import type { Submission } from "@/types/submission";
 
@@ -73,19 +78,29 @@ export default function SubmitForm({ onMascotStateChange }: SubmitFormProps) {
       const result = await parseSubmissionClient(currentInput);
 
       if (result.success) {
-        const savedSubmission = saveLocalSubmission(result.data);
+        const savedSubmission = await saveRemoteSubmission(
+          normalizeSubmission({
+            ...result.data,
+            ...getClientSourceInfo(),
+          }),
+        );
         setSubmission(savedSubmission);
         onMascotStateChange?.("received");
-        setFormMessage(null);
+        setFormMessage("提交成功，怒怒已经把链接收进后台。");
         setRawInput("");
       } else {
         setSubmission(result.data);
         onMascotStateChange?.("error");
         setFormMessage(result.data.errorMessage ?? "怒怒这次没听清，可以稍后再试。");
       }
-    } catch {
+    } catch (error) {
       onMascotStateChange?.("error");
       const now = new Date().toISOString();
+      const sourceInfo = getClientSourceInfo();
+      const errorMessage =
+        error instanceof SubmissionStorageError
+          ? error.message
+          : "提交失败，请稍后重试。";
       setSubmission({
         id: crypto.randomUUID(),
         rawInput: currentInput,
@@ -101,14 +116,17 @@ export default function SubmitForm({ onMascotStateChange }: SubmitFormProps) {
         dishCandidates: [],
         confidence: 0,
         parseStatus: "failed",
-        errorMessage: "怒怒这次被辣到断线了，请稍后再试。",
+        errorMessage,
         readStatus: "unread",
         ownerStatus: "new",
         ownerNote: "",
+        source: sourceInfo.source,
+        userAgent: sourceInfo.userAgent,
+        isValidUrl: Boolean(extractedUrl),
         createdAt: now,
         updatedAt: now,
       });
-      setFormMessage("怒怒这次被辣到断线了，请稍后再试。");
+      setFormMessage(errorMessage);
     } finally {
       setIsLoading(false);
     }

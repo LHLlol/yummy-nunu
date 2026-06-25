@@ -29,9 +29,25 @@ function createBaseSubmission(rawInput: string): Submission {
     readStatus: "unread",
     ownerStatus: "new",
     ownerNote: "",
+    source: null,
+    userAgent: null,
+    isValidUrl: false,
     createdAt: now,
     updatedAt: now,
   };
+}
+
+function isValidHttpUrl(value: string | null) {
+  if (!value) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 export async function parseSubmissionClient(rawInput: string): Promise<ParseApiResponse> {
@@ -49,10 +65,12 @@ export async function parseSubmissionClient(rawInput: string): Promise<ParseApiR
 
   const extractedUrl = extractUrlFromText(rawInput);
   submission.extractedUrl = extractedUrl;
+  submission.resolvedUrl = extractedUrl;
+  submission.isValidUrl = isValidHttpUrl(extractedUrl);
 
-  if (!extractedUrl) {
+  if (!submission.isValidUrl || !extractedUrl) {
     submission.parseStatus = "failed";
-    submission.errorMessage = "怒怒没找到链接，再粘贴一次试试。";
+    submission.errorMessage = "怒怒没找到正确的网址，请粘贴以 http:// 或 https:// 开头的链接。";
     submission.updatedAt = new Date().toISOString();
     return {
       success: false,
@@ -60,22 +78,24 @@ export async function parseSubmissionClient(rawInput: string): Promise<ParseApiR
     };
   }
 
-  const platform = detectPlatform(extractedUrl);
+  const validUrl = extractedUrl;
+  const platform = detectPlatform(validUrl);
   submission.sourcePlatform = platform;
 
   if (platform === "unsupported") {
-    submission.parseStatus = "failed";
-    submission.errorMessage = "怒怒现在只认识抖音和小红书。";
+    submission.parseStatus = "saved_only";
+    submission.textContent = rawInput;
+    submission.errorMessage = null;
     submission.updatedAt = new Date().toISOString();
     return {
-      success: false,
+      success: true,
       data: submission,
     };
   }
 
   submission.parseStatus = "parsing";
 
-  const { resolvedUrl } = await resolveShortUrl(extractedUrl, platform);
+  const { resolvedUrl } = await resolveShortUrl(validUrl, platform);
   submission.resolvedUrl = resolvedUrl;
 
   const metadata = await fetchMetadata(resolvedUrl, platform, rawInput);

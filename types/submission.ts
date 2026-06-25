@@ -30,6 +30,9 @@ export interface Submission {
   readStatus: ReadStatus;
   ownerStatus: OwnerStatus;
   ownerNote: string;
+  source: string | null;
+  userAgent: string | null;
+  isValidUrl: boolean;
   createdAt: string;
   updatedAt: string;
 }
