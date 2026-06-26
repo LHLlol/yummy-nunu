@@ -1,12 +1,14 @@
 "use client";
 
+import { withBasePath } from "@/lib/withBasePath";
+
 export type MascotState = "idle" | "listening" | "received" | "error" | "unlocked";
 
 interface AngryMascotProps {
   state?: MascotState;
 }
 
-const HERO_MASCOT_SRC = "images/hero-fire-character.png";
+const HERO_MASCOT_SRC = withBasePath("/images/hero-fire-character.png");
 
 function getStateLabel(state: MascotState) {
   if (state === "listening") {

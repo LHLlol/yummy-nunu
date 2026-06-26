@@ -88,7 +88,7 @@ export default function SubmitForm({ onMascotStateChange }: SubmitFormProps) {
         setSubmission(savedSubmission);
         onMascotStateChange?.("received");
         setFormMessage(
-          isSupabaseConfigured()
+          isSupabaseConfigured
             ? "提交成功，怒怒已经把链接收进后台。"
             : "提交成功，已暂存在本机；配置 Supabase 后可跨设备同步。",
         );

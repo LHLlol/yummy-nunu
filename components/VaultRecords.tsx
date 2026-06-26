@@ -170,7 +170,7 @@ export default function VaultRecords() {
       try {
         const freshSubmissions = await readRemoteSubmissions();
         syncSubmissions(freshSubmissions);
-        setMessage(isSupabaseConfigured() ? null : SUPABASE_CONFIG_MISSING_MESSAGE);
+        setMessage(isSupabaseConfigured ? null : SUPABASE_CONFIG_MISSING_MESSAGE);
       } catch (error) {
         if (!silent) {
           setSubmissions([]);

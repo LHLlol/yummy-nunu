@@ -1,12 +1,14 @@
 import type { OwnerStatus, ParseStatus, ReadStatus, SourcePlatform, Submission } from "@/types/submission";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/+$/, "") ?? "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const normalizedSupabaseUrl = supabaseUrl?.replace(/\/+$/, "") ?? "";
+const normalizedSupabaseAnonKey = supabaseAnonKey ?? "";
 const LINKS_SELECT = "id,url,created_at,updated_at,source,user_agent,is_valid,payload";
 const LOCAL_SUBMISSIONS_STORAGE_KEY = "nunu_submissions";
 
 export const SUPABASE_CONFIG_MISSING_MESSAGE =
-  "线上数据库还没有配置，请在 GitHub Secrets 中设置 NEXT_PUBLIC_SUPABASE_URL 和 NEXT_PUBLIC_SUPABASE_ANON_KEY。";
+  "线上数据库还没有配置，请在 GitHub Secrets 中配置 Supabase 环境变量。";
 
 export class SubmissionStorageError extends Error {
   constructor(message: string) {
@@ -115,10 +117,7 @@ function normalizeNullableString(value: unknown) {
   return typeof value === "string" && value.trim() ? value : null;
 }
 
-export function isSupabaseConfigured() {
-  return Boolean(supabaseUrl && supabaseAnonKey);
-}
-
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 export const isRemoteStorageConfigured = isSupabaseConfigured;
 
 function canUseLocalStorage() {
@@ -215,19 +214,19 @@ export function getClientSourceInfo() {
 }
 
 function getSupabaseEndpoint(path: string) {
-  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured) {
     throw new SubmissionStorageError(SUPABASE_CONFIG_MISSING_MESSAGE);
   }
 
-  return `${supabaseUrl}/rest/v1/${path}`;
+  return `${normalizedSupabaseUrl}/rest/v1/${path}`;
 }
 
 async function supabaseRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(getSupabaseEndpoint(path), {
     ...init,
     headers: {
-      apikey: supabaseAnonKey,
-      Authorization: `Bearer ${supabaseAnonKey}`,
+      apikey: normalizedSupabaseAnonKey,
+      Authorization: `Bearer ${normalizedSupabaseAnonKey}`,
       "Content-Type": "application/json",
       ...(init.headers ?? {}),
     },
@@ -407,7 +406,7 @@ function deleteLocalSubmission(id: string) {
 }
 
 export async function readRemoteSubmissions(): Promise<Submission[]> {
-  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured) {
     return readLocalSubmissions();
   }
 
@@ -421,7 +420,7 @@ export async function readRemoteSubmissions(): Promise<Submission[]> {
 export async function saveRemoteSubmission(submission: Submission): Promise<Submission> {
   const normalizedSubmission = normalizeSubmission(submission);
 
-  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured) {
     return saveLocalSubmission(normalizedSubmission);
   }
 
@@ -449,7 +448,7 @@ export async function updateRemoteSubmission(
     updatedAt: new Date().toISOString(),
   });
 
-  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured) {
     return updateLocalSubmission(submission, updates);
   }
 
@@ -471,7 +470,7 @@ export async function updateRemoteSubmission(
 }
 
 export async function deleteRemoteSubmission(id: string): Promise<boolean> {
-  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured) {
     return deleteLocalSubmission(id);
   }
 
